@@ -1,0 +1,32 @@
+name: Tailscale Automated Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  tailscale-action:
+    name: Conectar e Executar no PC
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o Codigo do Repositorio
+        uses: actions/checkout@v4
+
+      - name: Conectar na Tailnet
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+
+      - name: Verificar Status da Rede
+        run: tailscale status
+
+      - name: Configurar Chave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Abrir Conexao e Executar Comando no PC
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.PC_USER }}@${{ secrets.TARGET_PC_IP }} "${{ secrets.PC_COMMAND }}" 
